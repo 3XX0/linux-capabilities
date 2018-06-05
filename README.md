@@ -1,1 +1,3 @@
-# linux-capabilities
+# Linux capabilities cheatsheet
+
+![](cheatsheet.png?raw=true)
