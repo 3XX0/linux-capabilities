@@ -1,0 +1,75 @@
+digraph G {
+    compound=true;
+    edge [fontsize=10, color="black", fontcolor="black"];
+    node [shape="circle", fontsize=13, style="filled"];
+
+    "proc-permitted" [label="Proc permitted set"];
+    "proc-ambient" [label="Proc ambient set"];
+    "proc-effective" [label="Proc effective set"];
+    "proc-inheritable" [label="Proc inheritable set"];
+    "proc-bounding" [label="Proc bounding set"];
+
+    "file-effective" [label="[1] File effective set\n(single bit)"];
+    "file-inheritable" [label="[2] File inheritable set"];
+    "file-permitted" [label="[3] File permitted set"];
+
+    "new-proc-permitted" [color="forestgreen", fontcolor="white", label="Proc permitted set\n(after exec)"];
+    "new-proc-ambient" [color="forestgreen", fontcolor="white", label="Proc ambient set\n(after exec)"];
+    "new-proc-effective" [color="forestgreen", fontcolor="white", label="Proc effective set\n(after exec)"];
+    "new-proc-inheritable" [color="forestgreen", fontcolor="white", label="Proc inheritable set\n(after exec)"];
+    "new-proc-bounding" [color="forestgreen", fontcolor="white", label="Proc bounding set\n(after exec)"];
+
+    subgraph clusterA {
+        label = "Inheritable superset\n(intersection of)";
+        color = "forestgreen";
+        fontcolor = "forestgreen";
+        penwidth = 3;
+        "proc-inheritable";
+        "file-inheritable";
+    };
+    subgraph clusterB {
+        label = "Permitted superset\n(intersection of)";
+        color = "forestgreen";
+        fontcolor = "forestgreen";
+        penwidth = 3;
+        "proc-bounding";
+        "file-permitted";
+     };
+
+    "proc-ambient" -> "proc-inheritable"  [label="Requires subset of\nAutomatically lowered by"];
+    "proc-ambient" -> "proc-permitted"  [label="Requires subset of\nAutomatically lowered by"];
+    "proc-permitted" -> "proc-permitted"  [label="Requires subset of"];
+    "proc-effective" -> "proc-permitted"  [label="Requires subset of"];
+    "proc-inheritable" -> "proc-inheritable"
+    "proc-inheritable" -> "proc-bounding"  [label="Requires subset of itself or"];
+    "proc-inheritable" -> "proc-permitted"  [label="Requires subset of itself or\n(unless CAP_SETPCAP)"];
+    "proc-bounding" -> "proc-bounding"  [label="Requires CAP_SETPCAP\nCannot be restored"];
+    "file-effective" -> "file-inheritable"  [label="Requires matching"];
+    "file-effective" -> "file-permitted"  [label="Requires matching"];
+    "file-effective" -> "file-effective"  [label="Requires CAP_SETPCAP\n(+ CAP_FOWNER depending on EUID)"];
+    "file-inheritable" -> "file-inheritable"  [label="Requires CAP_SETPCAP\n(+ CAP_FOWNER depending on EUID)"];
+    "file-permitted" -> "file-permitted"  [label="Requires CAP_SETPCAP\n(+ CAP_FOWNER depending on EUID)"];
+
+    "proc-ambient" -> "proc-ambient"  [color="blue", fontcolor="blue", label="Emptied\nif any of EUID/RUID/SUID was 0 and all changed to non-0\n(unless SECBIT_NO_SETUID_FIXUP)"];
+    "proc-permitted" -> "proc-permitted"  [color="blue", fontcolor="blue", label="Emptied\nif any of EUID/RUID/SUID was 0 and all changed to non-0\n(unless SECBIT_NO_SETUID_FIXUP or SECBIT_KEEP_CAPS)"];
+    "proc-effective" -> "proc-effective"  [color="blue", fontcolor="blue", label="Emptied\nif EUID changed to non-0\n(unless SECBIT_NO_SETUID_FIXUP)\n\nif any of EUID/RUID/SUID was 0 and all changed to non-0\n(unless SECBIT_NO_SETUID_FIXUP or SECBIT_KEEP_CAPS)\n\npartially if FSUID changed to non-0\n (unless SECBIT_NO_SETUID_FIXUP)"];
+    "proc-effective" -> "proc-permitted"  [color="blue", fontcolor="blue", label="Copied from\nif EUID changed to 0\n(unless SECBIT_NO_SETUID_FIXUP)\n\npartially if FSUID changed to 0\n(unless SECBIT_NO_SETUID_FIXUP)"];
+
+    "new-proc-bounding" -> "proc-bounding"  [color="forestgreen", fontcolor="forestgreen", label="Copied from"];
+    "new-proc-inheritable" -> "proc-inheritable"  [color="forestgreen", fontcolor="forestgreen", label="Copied from"];
+    "new-proc-ambient" -> "proc-ambient"  [color="forestgreen", fontcolor="forestgreen", label="Copied from"];
+    "new-proc-permitted" -> "proc-inheritable"  [color="forestgreen", fontcolor="forestgreen", lhead="clusterA", label="Combination of"];
+    "new-proc-permitted" -> "proc-bounding"  [color="forestgreen", fontcolor="forestgreen", lhead="clusterB", label="Combination of"];
+    "new-proc-permitted" -> "new-proc-ambient"  [color="forestgreen", fontcolor="forestgreen", label="Combination of"];
+    "new-proc-permitted" -> "proc-permitted"  [color="forestgreen", fontcolor="forestgreen", label="Automatically lowered by\nif PR_SET_NO_NEW_PRIVS"];
+    "new-proc-effective" -> "new-proc-permitted"  [color="forestgreen", fontcolor="forestgreen", label="Copied from\nif [1] is set"];
+    "new-proc-effective" -> "new-proc-ambient"  [color="forestgreen", fontcolor="forestgreen", label="Copied from\nif [1] is unset"];
+
+    "proc-ambient" -> "proc-ambient":w  [color="red", fontcolor="red", label="Full\nif CLONE_NEWUSER"];
+    "proc-permitted" -> "proc-permitted":w  [color="red", fontcolor="red", label="Full\nif CLONE_NEWUSER"];
+    "proc-effective" -> "proc-effective":w  [color="red", fontcolor="red", label="Full\nif CLONE_NEWUSER"];
+    "new-proc-ambient" -> "new-proc-ambient"  [color="red", fontcolor="red", label="Emptied\nif [1] or [2] or [3] is set\n\nif executable setuid-root or setgid-root\n(and root mapped)"];
+    "file-effective" -> "file-effective"  [color="red", fontcolor="red", label="Set\nif EUID is 0\n(unless SECBIT_NOROOT)\n\nif unset and executable setuid-root\n(and root mapped, unless SECBIT_NOROOT)"];
+    "file-inheritable" -> "file-inheritable"  [color="red", fontcolor="red", label="Full\nif EUID or RUID is 0\n(unless SECBIT_NOROOT)\n\nif unset and executable setuid-root\n(and root mapped, unless SECBIT_NOROOT)"];
+    "file-permitted" -> "file-permitted" [color="red", fontcolor="red", label="Full\nif EUID or RUID is 0\n(unless SECBIT_NOROOT)\n\nif unset and executable setuid-root\n(and root mapped, unless SECBIT_NOROOT)"];
+}
