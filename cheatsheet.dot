@@ -62,13 +62,13 @@ digraph G {
     "new-proc-permitted" -> "proc-bounding"  [color="forestgreen", fontcolor="forestgreen", lhead="clusterB", label="Combination of"];
     "new-proc-permitted" -> "new-proc-ambient"  [color="forestgreen", fontcolor="forestgreen", label="Combination of"];
     "new-proc-permitted" -> "proc-permitted"  [color="forestgreen", fontcolor="forestgreen", label="Automatically lowered by\nif PR_SET_NO_NEW_PRIVS"];
-    "new-proc-effective" -> "new-proc-permitted"  [color="forestgreen", fontcolor="forestgreen", label="Copied from\nif [1] is set"];
-    "new-proc-effective" -> "new-proc-ambient"  [color="forestgreen", fontcolor="forestgreen", label="Copied from\nif [1] is unset"];
+    "new-proc-effective" -> "new-proc-permitted"  [color="forestgreen", fontcolor="forestgreen", label="Copied from\nif effective file capability is set ([1])"];
+    "new-proc-effective" -> "new-proc-ambient"  [color="forestgreen", fontcolor="forestgreen", label="Copied from\nif effective file capability is unset ([1])"];
 
-    "proc-ambient" -> "proc-ambient":w  [color="red", fontcolor="red", label="Full\nif CLONE_NEWUSER"];
+    "proc-bounding" -> "proc-bounding" [color="red", fontcolor="red", label="Full\nif CLONE_NEWUSER"];
     "proc-permitted" -> "proc-permitted":w  [color="red", fontcolor="red", label="Full\nif CLONE_NEWUSER"];
     "proc-effective" -> "proc-effective":w  [color="red", fontcolor="red", label="Full\nif CLONE_NEWUSER"];
-    "new-proc-ambient" -> "new-proc-ambient"  [color="red", fontcolor="red", label="Emptied\nif [1] or [2] or [3] is set\n\nif executable setuid-root or setgid-root\n(and root mapped)"];
+    "new-proc-ambient" -> "new-proc-ambient"  [color="red", fontcolor="red", label="Emptied\nif any file capability is set ([1] or [2] or [3])\n\nif executable setuid-root or setgid-root\n(and root mapped)"];
     "file-effective" -> "file-effective"  [color="red", fontcolor="red", label="Set\nif EUID is 0\n(unless SECBIT_NOROOT)\n\nif unset and executable setuid-root\n(and root mapped, unless SECBIT_NOROOT)"];
     "file-inheritable" -> "file-inheritable"  [color="red", fontcolor="red", label="Full\nif EUID or RUID is 0\n(unless SECBIT_NOROOT)\n\nif unset and executable setuid-root\n(and root mapped, unless SECBIT_NOROOT)"];
     "file-permitted" -> "file-permitted" [color="red", fontcolor="red", label="Full\nif EUID or RUID is 0\n(unless SECBIT_NOROOT)\n\nif unset and executable setuid-root\n(and root mapped, unless SECBIT_NOROOT)"];
